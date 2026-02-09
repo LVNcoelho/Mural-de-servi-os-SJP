@@ -6,7 +6,10 @@ export default {
   ],
   theme: {
     extend: {
-      // Podes adicionar cores personalizadas ou extensões de tema aqui
+      colors: {
+        'mural-azul': '#2563EB',
+        'mural-verde': '#22C55E',
+      }
     },
   },
   plugins: [],
