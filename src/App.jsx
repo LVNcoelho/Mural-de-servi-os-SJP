@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { 
   PlusCircle, MessageCircle, MapPin, Filter, Search,
   CheckCircle2, Clock, X, Briefcase
