@@ -64,7 +64,7 @@ export default function App() {
 
   const handleCreateJob = async (e) => {
     e.preventDefault();
-    if (newJob.pin.length < 4) return alert("Defina um PIN de pelo menos 4 números para segunrança.");
+    if (newJob.pin.length < 4) return alert("Defina um PIN de pelo menos 4 números.");
     
     try {
       const { data, error } = await supabase
@@ -76,7 +76,7 @@ export default function App() {
           location: newJob.location,
           author: newJob.author,
           whatsapp: newJob.whatsapp,
-          pin: newJob.pin // Salva o PIN no banco
+          pin: newJob.pin
         }]).select();
       if (error) throw error;
       setJobs([data[0], ...jobs]);
@@ -88,23 +88,18 @@ export default function App() {
   };
 
   const handleDeleteJob = async (job) => {
-    const inputPin = window.prompt("Para excluir, digite o PIN criado no anúncio (ou o PIN do Administrador):");
-    
+    const inputPin = window.prompt("Digite o PIN para excluir:");
     if (inputPin === job.pin || inputPin === ADMIN_PIN) {
       try {
-        const { error } = await supabase
-          .from('jobs')
-          .delete()
-          .eq('id', job.id);
-
+        const { error } = await supabase.from('jobs').delete().eq('id', job.id);
         if (error) throw error;
         setJobs(jobs.filter(j => j.id !== job.id));
-        alert("Anúncio removido com sucesso!");
+        alert("Anúncio removido!");
       } catch (error) {
-        alert('Erro ao excluir: ' + error.message);
+        alert('Erro: ' + error.message);
       }
     } else if (inputPin !== null) {
-      alert("PIN incorreto! Apenas o autor ou o administrador podem remover este anúncio.");
+      alert("PIN incorreto!");
     }
   };
 
@@ -113,16 +108,18 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24" style={{ fontFamily: "'Old Standard TT', serif" }}>
       
-      <header className="bg-[#2563EB] text-white px-6 py-5 rounded-b-xl shadow-lg sticky top-0 z-40">
+      {/* HEADER AJUSTADO COM O NOME COMPLETO */}
+      <header className="bg-[#2563EB] text-white px-4 py-5 rounded-b-xl shadow-lg sticky top-0 z-40">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
-          <div>
+          <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <Briefcase className="w-6 h-6" />
-              <h1 className="text-2xl font-bold tracking-tight">Mural SJP</h1>
+              <Briefcase className="w-5 h-5" />
+              {/* Ajustei o texto aqui e diminuí levemente a fonte para text-xl para caber tudo */}
+              <h1 className="text-xl font-bold tracking-tight">Mural de Serviços em SJP</h1>
             </div>
             <p className="text-blue-100 text-[10px] uppercase tracking-widest mt-0.5 opacity-80">São João da Ponta conectado</p>
           </div>
-          <button onClick={() => setShowModal(true)} className="bg-white text-[#2563EB] px-5 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-md">
+          <button onClick={() => setShowModal(true)} className="bg-white text-[#2563EB] px-4 py-2 rounded-full text-xs font-bold flex items-center gap-1 shadow-md shrink-0">
             <PlusCircle className="w-4 h-4" /> Postar
           </button>
         </div>
@@ -165,13 +162,9 @@ export default function App() {
                     </div>
                     
                     <div className="flex gap-2">
-                      <button 
-                        onClick={() => handleDeleteJob(job)}
-                        className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-colors"
-                      >
+                      <button onClick={() => handleDeleteJob(job)} className="p-3 text-red-400 hover:text-red-600 rounded-2xl transition-colors">
                         <Trash2 className="w-5 h-5" />
                       </button>
-
                       <button onClick={() => handleWhatsAppClick(job)} className="bg-[#22C55E] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg">
                         <MessageCircle className="w-5 h-5" /> Chamar
                       </button>
@@ -190,34 +183,21 @@ export default function App() {
             <button onClick={() => setShowModal(false)} className="absolute right-6 top-6"><X /></button>
             <h2 className="text-2xl font-bold mb-6 italic text-blue-600">Postar Novo Bico</h2>
             <form onSubmit={handleCreateJob} className="space-y-4">
-              <input type="text" placeholder="Seu Nome" required style={{ fontFamily: "'Old Standard TT', serif" }} className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.author} onChange={e => setNewJob({...newJob, author: e.target.value})} />
-              <input type="tel" placeholder="WhatsApp (Ex: 91999999999)" required style={{ fontFamily: "'Old Standard TT', serif" }} className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.whatsapp} onChange={e => setNewJob({...newJob, whatsapp: e.target.value})} />
-              <input type="text" placeholder="Título do serviço" required style={{ fontFamily: "'Old Standard TT', serif" }} className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.title} onChange={e => setNewJob({...newJob, title: e.target.value})} />
-              
+              <input type="text" placeholder="Seu Nome" required className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.author} onChange={e => setNewJob({...newJob, author: e.target.value})} />
+              <input type="tel" placeholder="WhatsApp" required className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.whatsapp} onChange={e => setNewJob({...newJob, whatsapp: e.target.value})} />
+              <input type="text" placeholder="Título do serviço" required className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.title} onChange={e => setNewJob({...newJob, title: e.target.value})} />
               <div className="flex gap-4">
-                <select style={{ fontFamily: "'Old Standard TT', serif" }} className="w-1/2 bg-gray-50 p-4 rounded-2xl" value={newJob.category} onChange={e => setNewJob({...newJob, category: e.target.value})}>
+                <select className="w-1/2 bg-gray-50 p-4 rounded-2xl" value={newJob.category} onChange={e => setNewJob({...newJob, category: e.target.value})}>
                   {CATEGORIES.slice(1).map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
-                <input type="text" placeholder="Bairro" style={{ fontFamily: "'Old Standard TT', serif" }} className="w-1/2 bg-gray-50 p-4 rounded-2xl" value={newJob.location} onChange={e => setNewJob({...newJob, location: e.target.value})} />
+                <input type="text" placeholder="Bairro" className="w-1/2 bg-gray-50 p-4 rounded-2xl" value={newJob.location} onChange={e => setNewJob({...newJob, location: e.target.value})} />
               </div>
-
-              <textarea placeholder="Descrição curta do serviço..." style={{ fontFamily: "'Old Standard TT', serif" }} className="w-full bg-gray-50 p-4 rounded-2xl h-24" value={newJob.description} onChange={e => setNewJob({...newJob, description: e.target.value})}></textarea>
-              
+              <textarea placeholder="Descrição..." className="w-full bg-gray-50 p-4 rounded-2xl h-24" value={newJob.description} onChange={e => setNewJob({...newJob, description: e.target.value})}></textarea>
               <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center gap-3">
                 <Lock className="w-5 h-5 text-blue-600" />
-                <input 
-                  type="password" 
-                  placeholder="Crie um PIN de 4 dígitos para excluir depois" 
-                  maxLength={4}
-                  required 
-                  style={{ fontFamily: "'Old Standard TT', serif" }} 
-                  className="bg-transparent w-full outline-none text-blue-800 placeholder:text-blue-300" 
-                  value={newJob.pin} 
-                  onChange={e => setNewJob({...newJob, pin: e.target.value.replace(/\D/g, '')})} 
-                />
+                <input type="password" placeholder="PIN de 4 dígitos" maxLength={4} required className="bg-transparent w-full outline-none" value={newJob.pin} onChange={e => setNewJob({...newJob, pin: e.target.value.replace(/\D/g, '')})} />
               </div>
-
-              <button className="w-full bg-[#2563EB] text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-colors">Publicar Agora</button>
+              <button className="w-full bg-[#2563EB] text-white py-4 rounded-2xl font-bold shadow-lg">Publicar Agora</button>
             </form>
           </div>
         </div>
