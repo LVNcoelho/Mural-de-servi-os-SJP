@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import {
   PlusCircle, MessageCircle, MapPin, Filter, Search,
-  CheckCircle2, Clock, X, Briefcase, Trash2
+  CheckCircle2, Clock, X, Briefcase, Trash2, Lock
 } from 'lucide-react';
 
 // CREDENCIAIS:
 const supabaseUrl = 'https://sknvpkauajwudoqojukf.supabase.co';
 const supabaseKey = 'sb_publishable_ykl5x46QGcdpVcSb2jUtaw_OWQxTmU5';
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+const ADMIN_PIN = "0000"; // Sua senha mestre de administrador
 
 const CATEGORIES = [
   { id: 'todos', name: 'Todos' },
@@ -26,7 +28,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newJob, setNewJob] = useState({
-    title: '', category: 'Limpeza', location: '', description: '', author: '', whatsapp: ''
+    title: '', category: 'Limpeza', location: '', description: '', author: '', whatsapp: '', pin: ''
   });
 
   useEffect(() => {
@@ -62,6 +64,8 @@ export default function App() {
 
   const handleCreateJob = async (e) => {
     e.preventDefault();
+    if (newJob.pin.length < 4) return alert("Defina um PIN de pelo menos 4 números para segunrança.");
+    
     try {
       const { data, error } = await supabase
         .from('jobs')
@@ -71,33 +75,36 @@ export default function App() {
           category: newJob.category.toUpperCase(),
           location: newJob.location,
           author: newJob.author,
-          whatsapp: newJob.whatsapp
+          whatsapp: newJob.whatsapp,
+          pin: newJob.pin // Salva o PIN no banco
         }]).select();
       if (error) throw error;
       setJobs([data[0], ...jobs]);
       setShowModal(false);
-      setNewJob({ title: '', category: 'Limpeza', location: '', description: '', author: '', whatsapp: '' });
+      setNewJob({ title: '', category: 'Limpeza', location: '', description: '', author: '', whatsapp: '', pin: '' });
     } catch (error) {
       alert('Erro: ' + error.message);
     }
   };
 
-  // Função para excluir o anúncio
-  const handleDeleteJob = async (id) => {
-    if (window.confirm("Deseja realmente remover este anúncio? Esta ação não pode ser desfeita.")) {
+  const handleDeleteJob = async (job) => {
+    const inputPin = window.prompt("Para excluir, digite o PIN criado no anúncio (ou o PIN do Administrador):");
+    
+    if (inputPin === job.pin || inputPin === ADMIN_PIN) {
       try {
         const { error } = await supabase
           .from('jobs')
           .delete()
-          .eq('id', id);
+          .eq('id', job.id);
 
         if (error) throw error;
-        
-        // Atualiza a lista removendo o item deletado
-        setJobs(jobs.filter(job => job.id !== id));
+        setJobs(jobs.filter(j => j.id !== job.id));
+        alert("Anúncio removido com sucesso!");
       } catch (error) {
         alert('Erro ao excluir: ' + error.message);
       }
+    } else if (inputPin !== null) {
+      alert("PIN incorreto! Apenas o autor ou o administrador podem remover este anúncio.");
     }
   };
 
@@ -115,7 +122,7 @@ export default function App() {
             </div>
             <p className="text-blue-100 text-[10px] uppercase tracking-widest mt-0.5 opacity-80">São João da Ponta conectado</p>
           </div>
-          <button onClick={() => setShowModal(true)} className="bg-white text-[#2563EB] px-5 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-md hover:bg-blue-50 transition-colors">
+          <button onClick={() => setShowModal(true)} className="bg-white text-[#2563EB] px-5 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-md">
             <PlusCircle className="w-4 h-4" /> Postar
           </button>
         </div>
@@ -127,7 +134,6 @@ export default function App() {
             <button 
               key={cat.id} 
               onClick={() => setFilter(cat.id)} 
-              style={{ fontFamily: "'Old Standard TT', serif" }}
               className={`px-6 py-2.5 rounded-full font-bold text-sm whitespace-nowrap border ${filter === cat.id ? 'bg-[#2563EB] text-white border-transparent' : 'bg-white text-gray-500 border-gray-100'}`}
             >
               {cat.name}
@@ -141,7 +147,7 @@ export default function App() {
           ) : (
             filteredJobs.map((job, index) => (
               <div key={job.id} className={`${index !== filteredJobs.length - 1 ? 'border-b border-gray-200' : ''} py-8`}>
-                <div className="bg-white rounded-[2rem] p-7 shadow-sm border border-gray-50 hover:shadow-md transition-shadow">
+                <div className="bg-white rounded-[2rem] p-7 shadow-sm border border-gray-50">
                   <div className="flex justify-between mb-4">
                     <span className="bg-blue-50 text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-lg uppercase">{job.category}</span>
                     <span className="text-gray-400 text-xs flex items-center gap-1"><MapPin className="w-3 h-3"/>{job.location}</span>
@@ -159,16 +165,14 @@ export default function App() {
                     </div>
                     
                     <div className="flex gap-2">
-                      {/* Botão de Excluir */}
                       <button 
-                        onClick={() => handleDeleteJob(job.id)}
-                        className="p-3 text-red-500 hover:bg-red-50 rounded-2xl transition-colors"
-                        title="Remover anúncio"
+                        onClick={() => handleDeleteJob(job)}
+                        className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-colors"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
 
-                      <button onClick={() => handleWhatsAppClick(job)} className="bg-[#22C55E] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition-transform">
+                      <button onClick={() => handleWhatsAppClick(job)} className="bg-[#22C55E] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg">
                         <MessageCircle className="w-5 h-5" /> Chamar
                       </button>
                     </div>
@@ -181,22 +185,39 @@ export default function App() {
       </main>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" style={{ fontFamily: "'Old Standard TT', serif" }}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white w-full max-w-lg rounded-t-[3rem] p-10 relative">
             <button onClick={() => setShowModal(false)} className="absolute right-6 top-6"><X /></button>
-            <h2 className="text-2xl font-bold mb-6">Novo Bico</h2>
+            <h2 className="text-2xl font-bold mb-6 italic text-blue-600">Postar Novo Bico</h2>
             <form onSubmit={handleCreateJob} className="space-y-4">
               <input type="text" placeholder="Seu Nome" required style={{ fontFamily: "'Old Standard TT', serif" }} className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.author} onChange={e => setNewJob({...newJob, author: e.target.value})} />
-              <input type="tel" placeholder="WhatsApp (919...)" required style={{ fontFamily: "'Old Standard TT', serif" }} className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.whatsapp} onChange={e => setNewJob({...newJob, whatsapp: e.target.value})} />
+              <input type="tel" placeholder="WhatsApp (Ex: 91999999999)" required style={{ fontFamily: "'Old Standard TT', serif" }} className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.whatsapp} onChange={e => setNewJob({...newJob, whatsapp: e.target.value})} />
               <input type="text" placeholder="Título do serviço" required style={{ fontFamily: "'Old Standard TT', serif" }} className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.title} onChange={e => setNewJob({...newJob, title: e.target.value})} />
+              
               <div className="flex gap-4">
                 <select style={{ fontFamily: "'Old Standard TT', serif" }} className="w-1/2 bg-gray-50 p-4 rounded-2xl" value={newJob.category} onChange={e => setNewJob({...newJob, category: e.target.value})}>
                   {CATEGORIES.slice(1).map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
                 <input type="text" placeholder="Bairro" style={{ fontFamily: "'Old Standard TT', serif" }} className="w-1/2 bg-gray-50 p-4 rounded-2xl" value={newJob.location} onChange={e => setNewJob({...newJob, location: e.target.value})} />
               </div>
-              <textarea placeholder="Descrição" style={{ fontFamily: "'Old Standard TT', serif" }} className="w-full bg-gray-50 p-4 rounded-2xl h-24" value={newJob.description} onChange={e => setNewJob({...newJob, description: e.target.value})}></textarea>
-              <button className="w-full bg-[#2563EB] text-white py-4 rounded-2xl font-bold shadow-lg">Publicar</button>
+
+              <textarea placeholder="Descrição curta do serviço..." style={{ fontFamily: "'Old Standard TT', serif" }} className="w-full bg-gray-50 p-4 rounded-2xl h-24" value={newJob.description} onChange={e => setNewJob({...newJob, description: e.target.value})}></textarea>
+              
+              <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center gap-3">
+                <Lock className="w-5 h-5 text-blue-600" />
+                <input 
+                  type="password" 
+                  placeholder="Crie um PIN de 4 dígitos para excluir depois" 
+                  maxLength={4}
+                  required 
+                  style={{ fontFamily: "'Old Standard TT', serif" }} 
+                  className="bg-transparent w-full outline-none text-blue-800 placeholder:text-blue-300" 
+                  value={newJob.pin} 
+                  onChange={e => setNewJob({...newJob, pin: e.target.value.replace(/\D/g, '')})} 
+                />
+              </div>
+
+              <button className="w-full bg-[#2563EB] text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-colors">Publicar Agora</button>
             </form>
           </div>
         </div>
