@@ -5,12 +5,11 @@ import {
   CheckCircle2, Clock, X, Briefcase, Trash2, Lock
 } from 'lucide-react';
 
-// CREDENCIAIS:
 const supabaseUrl = 'https://sknvpkauajwudoqojukf.supabase.co';
 const supabaseKey = 'sb_publishable_ykl5x46QGcdpVcSb2jUtaw_OWQxTmU5';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const ADMIN_PIN = "0000"; // Sua senha mestre de administrador
+const ADMIN_PIN = "0000"; // Seu PIN de administrador
 
 const CATEGORIES = [
   { id: 'todos', name: 'Todos' },
@@ -41,10 +40,7 @@ export default function App() {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('jobs').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       setJobs(data || []);
     } catch (error) {
@@ -58,26 +54,23 @@ export default function App() {
 
   const handleWhatsAppClick = (job) => {
     const cleanPhone = job.whatsapp.replace(/\D/g, '');
-    const message = encodeURIComponent(`Olá ${job.author}, vi seu anúncio "${job.title}" no Mural SJP!`);
+    const message = encodeURIComponent(`Olá ${job.author}, vi seu anúncio "${job.title}" no Mural!`);
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
 
   const handleCreateJob = async (e) => {
     e.preventDefault();
-    if (newJob.pin.length < 4) return alert("Defina um PIN de pelo menos 4 números.");
-    
+    if (newJob.pin.length < 4) return alert("Crie um PIN de 4 dígitos.");
     try {
-      const { data, error } = await supabase
-        .from('jobs')
-        .insert([{
-          title: newJob.title,
-          description: newJob.description,
-          category: newJob.category.toUpperCase(),
-          location: newJob.location,
-          author: newJob.author,
-          whatsapp: newJob.whatsapp,
-          pin: newJob.pin
-        }]).select();
+      const { data, error } = await supabase.from('jobs').insert([{
+        title: newJob.title,
+        description: newJob.description,
+        category: newJob.category.toUpperCase(),
+        location: newJob.location,
+        author: newJob.author,
+        whatsapp: newJob.whatsapp,
+        pin: newJob.pin
+      }]).select();
       if (error) throw error;
       setJobs([data[0], ...jobs]);
       setShowModal(false);
@@ -88,7 +81,7 @@ export default function App() {
   };
 
   const handleDeleteJob = async (job) => {
-    const inputPin = window.prompt("Digite o PIN para excluir:");
+    const inputPin = window.prompt("Digite o PIN para excluir este anúncio:");
     if (inputPin === job.pin || inputPin === ADMIN_PIN) {
       try {
         const { error } = await supabase.from('jobs').delete().eq('id', job.id);
@@ -96,10 +89,10 @@ export default function App() {
         setJobs(jobs.filter(j => j.id !== job.id));
         alert("Anúncio removido!");
       } catch (error) {
-        alert('Erro: ' + error.message);
+        alert('Erro ao excluir: ' + error.message);
       }
     } else if (inputPin !== null) {
-      alert("PIN incorreto!");
+      alert("PIN incorreto.");
     }
   };
 
@@ -108,18 +101,17 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24" style={{ fontFamily: "'Old Standard TT', serif" }}>
       
-      {/* HEADER AJUSTADO COM O NOME COMPLETO */}
-      <header className="bg-[#2563EB] text-white px-4 py-5 rounded-b-xl shadow-lg sticky top-0 z-40">
+      {/* HEADER: Ajustado para Mural de Serviços em SJP */}
+      <header className="bg-[#2563EB] text-white px-6 py-5 rounded-b-xl shadow-lg sticky top-0 z-40">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
-          <div className="flex flex-col">
+          <div>
             <div className="flex items-center gap-2">
-              <Briefcase className="w-5 h-5" />
-              {/* Ajustei o texto aqui e diminuí levemente a fonte para text-xl para caber tudo */}
-              <h1 className="text-xl font-bold tracking-tight">Mural de Serviços em SJP</h1>
+              <Briefcase className="w-6 h-6" />
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Mural de Serviços em SJP</h1>
             </div>
             <p className="text-blue-100 text-[10px] uppercase tracking-widest mt-0.5 opacity-80">São João da Ponta conectado</p>
           </div>
-          <button onClick={() => setShowModal(true)} className="bg-white text-[#2563EB] px-4 py-2 rounded-full text-xs font-bold flex items-center gap-1 shadow-md shrink-0">
+          <button onClick={() => setShowModal(true)} className="bg-white text-[#2563EB] px-5 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-md">
             <PlusCircle className="w-4 h-4" /> Postar
           </button>
         </div>
@@ -128,11 +120,7 @@ export default function App() {
       <main className="max-w-2xl mx-auto px-4">
         <div className="flex gap-3 overflow-x-auto py-6 no-scrollbar">
           {CATEGORIES.map(cat => (
-            <button 
-              key={cat.id} 
-              onClick={() => setFilter(cat.id)} 
-              className={`px-6 py-2.5 rounded-full font-bold text-sm whitespace-nowrap border ${filter === cat.id ? 'bg-[#2563EB] text-white border-transparent' : 'bg-white text-gray-500 border-gray-100'}`}
-            >
+            <button key={cat.id} onClick={() => setFilter(cat.id)} className={`px-6 py-2.5 rounded-full font-bold text-sm whitespace-nowrap border ${filter === cat.id ? 'bg-[#2563EB] text-white border-transparent' : 'bg-white text-gray-500 border-gray-100'}`}>
               {cat.name}
             </button>
           ))}
@@ -147,7 +135,7 @@ export default function App() {
                 <div className="bg-white rounded-[2rem] p-7 shadow-sm border border-gray-50">
                   <div className="flex justify-between mb-4">
                     <span className="bg-blue-50 text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-lg uppercase">{job.category}</span>
-                    <span className="text-gray-400 text-xs flex items-center gap-1"><MapPin className="w-3 h-3"/>{job.location}</span>
+                    <span className="text-gray-400 text-xs flex items-center gap-1 font-sans"><MapPin className="w-3 h-3"/>{job.location}</span>
                   </div>
                   <h3 className="text-2xl font-bold text-slate-800 mb-2">{job.title}</h3>
                   <p className="text-gray-500 italic mb-6">"{job.description}"</p>
@@ -157,7 +145,7 @@ export default function App() {
                       <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">{job.author[0]}</div>
                       <div>
                         <p className="font-bold text-slate-700">{job.author}</p>
-                        <p className="text-xs text-gray-400">{new Date(job.created_at).toLocaleDateString('pt-BR')}</p>
+                        <p className="text-xs text-gray-400 font-sans">{new Date(job.created_at).toLocaleDateString('pt-BR')}</p>
                       </div>
                     </div>
                     
@@ -178,26 +166,26 @@ export default function App() {
       </main>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full max-w-lg rounded-t-[3rem] p-10 relative">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" style={{ fontFamily: "'Old Standard TT', serif" }}>
+          <div className="bg-white w-full max-w-lg rounded-t-[3rem] p-8 sm:rounded-[3rem] relative">
             <button onClick={() => setShowModal(false)} className="absolute right-6 top-6"><X /></button>
             <h2 className="text-2xl font-bold mb-6 italic text-blue-600">Postar Novo Bico</h2>
             <form onSubmit={handleCreateJob} className="space-y-4">
-              <input type="text" placeholder="Seu Nome" required className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.author} onChange={e => setNewJob({...newJob, author: e.target.value})} />
-              <input type="tel" placeholder="WhatsApp" required className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.whatsapp} onChange={e => setNewJob({...newJob, whatsapp: e.target.value})} />
-              <input type="text" placeholder="Título do serviço" required className="w-full bg-gray-50 p-4 rounded-2xl" value={newJob.title} onChange={e => setNewJob({...newJob, title: e.target.value})} />
+              <input type="text" placeholder="Seu Nome" required className="w-full bg-gray-50 p-4 rounded-2xl outline-none border border-transparent focus:border-blue-200" value={newJob.author} onChange={e => setNewJob({...newJob, author: e.target.value})} />
+              <input type="tel" placeholder="WhatsApp (Ex: 919...)" required className="w-full bg-gray-50 p-4 rounded-2xl outline-none border border-transparent focus:border-blue-200" value={newJob.whatsapp} onChange={e => setNewJob({...newJob, whatsapp: e.target.value})} />
+              <input type="text" placeholder="O que você faz?" required className="w-full bg-gray-50 p-4 rounded-2xl outline-none border border-transparent focus:border-blue-200" value={newJob.title} onChange={e => setNewJob({...newJob, title: e.target.value})} />
               <div className="flex gap-4">
-                <select className="w-1/2 bg-gray-50 p-4 rounded-2xl" value={newJob.category} onChange={e => setNewJob({...newJob, category: e.target.value})}>
+                <select className="w-1/2 bg-gray-50 p-4 rounded-2xl outline-none border border-transparent focus:border-blue-200" value={newJob.category} onChange={e => setNewJob({...newJob, category: e.target.value})}>
                   {CATEGORIES.slice(1).map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
-                <input type="text" placeholder="Bairro" className="w-1/2 bg-gray-50 p-4 rounded-2xl" value={newJob.location} onChange={e => setNewJob({...newJob, location: e.target.value})} />
+                <input type="text" placeholder="Bairro" className="w-1/2 bg-gray-50 p-4 rounded-2xl outline-none border border-transparent focus:border-blue-200" value={newJob.location} onChange={e => setNewJob({...newJob, location: e.target.value})} />
               </div>
-              <textarea placeholder="Descrição..." className="w-full bg-gray-50 p-4 rounded-2xl h-24" value={newJob.description} onChange={e => setNewJob({...newJob, description: e.target.value})}></textarea>
+              <textarea placeholder="Detalhes (preço, horário...)" className="w-full bg-gray-50 p-4 rounded-2xl h-24 outline-none border border-transparent focus:border-blue-200" value={newJob.description} onChange={e => setNewJob({...newJob, description: e.target.value})}></textarea>
               <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center gap-3">
                 <Lock className="w-5 h-5 text-blue-600" />
-                <input type="password" placeholder="PIN de 4 dígitos" maxLength={4} required className="bg-transparent w-full outline-none" value={newJob.pin} onChange={e => setNewJob({...newJob, pin: e.target.value.replace(/\D/g, '')})} />
+                <input type="password" placeholder="Crie um PIN de 4 dígitos para excluir" maxLength={4} required className="bg-transparent w-full outline-none text-blue-900" value={newJob.pin} onChange={e => setNewJob({...newJob, pin: e.target.value.replace(/\D/g, '')})} />
               </div>
-              <button className="w-full bg-[#2563EB] text-white py-4 rounded-2xl font-bold shadow-lg">Publicar Agora</button>
+              <button className="w-full bg-[#2563EB] text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-600 transition-colors">Publicar Agora</button>
             </form>
           </div>
         </div>
