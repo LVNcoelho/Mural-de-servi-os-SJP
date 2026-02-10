@@ -29,7 +29,6 @@ export default function App() {
     title: '', category: 'Limpeza', location: '', description: '', author: '', whatsapp: ''
   });
 
-  // Importação da fonte Old Standard TT
   useEffect(() => {
     const link = document.createElement('link');
     link.href = 'https://fonts.googleapis.com/css2?family=Old+Standard+TT:wght@400;700&display=swap';
@@ -88,7 +87,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24" style={{ fontFamily: "'Old Standard TT', serif" }}>
       
-      {/* HEADER: Borda reduzida e fonte aplicada */}
       <header className="bg-[#2563EB] text-white px-6 py-5 rounded-b-xl shadow-lg sticky top-0 z-40">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
           <div>
@@ -118,29 +116,36 @@ export default function App() {
           ))}
         </div>
 
-        <div className="space-y-6">
-          {loading ? <p className="text-center py-10">Carregando...</p> : filteredJobs.map(job => (
-            <div key={job.id} className="bg-white rounded-[2rem] p-7 shadow-sm border border-gray-100">
-              <div className="flex justify-between mb-4">
-                <span className="bg-blue-50 text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-lg uppercase">{job.category}</span>
-                <span className="text-gray-400 text-xs flex items-center gap-1"><MapPin className="w-3 h-3"/>{job.location}</span>
-              </div>
-              <h3 className="text-2xl font-bold text-slate-800 mb-2">{job.title}</h3>
-              <p className="text-gray-500 italic mb-6">"{job.description}"</p>
-              <div className="flex items-center justify-between border-t pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">{job.author[0]}</div>
-                  <div>
-                    <p className="font-bold text-slate-700">{job.author}</p>
-                    <p className="text-xs text-gray-400">{new Date(job.created_at).toLocaleDateString('pt-BR')}</p>
+        {/* LISTA DE ANÚNCIOS COM LINHA DIVISÓRIA */}
+        <div className="space-y-0">
+          {loading ? (
+            <p className="text-center py-10">Carregando...</p>
+          ) : (
+            filteredJobs.map((job, index) => (
+              <div key={job.id} className={`${index !== filteredJobs.length - 1 ? 'border-b border-gray-200' : ''} py-8`}>
+                <div className="bg-white rounded-[2rem] p-7 shadow-sm border border-gray-50 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between mb-4">
+                    <span className="bg-blue-50 text-[#2563EB] text-[10px] font-bold px-3 py-1 rounded-lg uppercase">{job.category}</span>
+                    <span className="text-gray-400 text-xs flex items-center gap-1"><MapPin className="w-3 h-3"/>{job.location}</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-2">{job.title}</h3>
+                  <p className="text-gray-500 italic mb-6">"{job.description}"</p>
+                  <div className="flex items-center justify-between border-t pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">{job.author[0]}</div>
+                      <div>
+                        <p className="font-bold text-slate-700">{job.author}</p>
+                        <p className="text-xs text-gray-400">{new Date(job.created_at).toLocaleDateString('pt-BR')}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => handleWhatsAppClick(job)} className="bg-[#22C55E] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition-transform">
+                      <MessageCircle className="w-5 h-5" /> Chamar
+                    </button>
                   </div>
                 </div>
-                <button onClick={() => handleWhatsAppClick(job)} className="bg-[#22C55E] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg">
-                  <MessageCircle className="w-5 h-5" /> Chamar
-                </button>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </main>
 
