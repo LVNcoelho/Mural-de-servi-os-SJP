@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import {
   PlusCircle, MessageCircle, MapPin, Filter, Search,
-  CheckCircle2, Clock, X, Briefcase
+  CheckCircle2, Clock, X, Briefcase, Trash2
 } from 'lucide-react';
 
 // CREDENCIAIS:
@@ -82,6 +82,25 @@ export default function App() {
     }
   };
 
+  // Função para excluir o anúncio
+  const handleDeleteJob = async (id) => {
+    if (window.confirm("Deseja realmente remover este anúncio? Esta ação não pode ser desfeita.")) {
+      try {
+        const { error } = await supabase
+          .from('jobs')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+        
+        // Atualiza a lista removendo o item deletado
+        setJobs(jobs.filter(job => job.id !== id));
+      } catch (error) {
+        alert('Erro ao excluir: ' + error.message);
+      }
+    }
+  };
+
   const filteredJobs = filter === 'todos' ? jobs : jobs.filter(j => j.category.toLowerCase() === filter.toLowerCase());
 
   return (
@@ -116,7 +135,6 @@ export default function App() {
           ))}
         </div>
 
-        {/* LISTA DE ANÚNCIOS COM LINHA DIVISÓRIA */}
         <div className="space-y-0">
           {loading ? (
             <p className="text-center py-10">Carregando...</p>
@@ -130,6 +148,7 @@ export default function App() {
                   </div>
                   <h3 className="text-2xl font-bold text-slate-800 mb-2">{job.title}</h3>
                   <p className="text-gray-500 italic mb-6">"{job.description}"</p>
+                  
                   <div className="flex items-center justify-between border-t pt-6">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">{job.author[0]}</div>
@@ -138,9 +157,21 @@ export default function App() {
                         <p className="text-xs text-gray-400">{new Date(job.created_at).toLocaleDateString('pt-BR')}</p>
                       </div>
                     </div>
-                    <button onClick={() => handleWhatsAppClick(job)} className="bg-[#22C55E] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition-transform">
-                      <MessageCircle className="w-5 h-5" /> Chamar
-                    </button>
+                    
+                    <div className="flex gap-2">
+                      {/* Botão de Excluir */}
+                      <button 
+                        onClick={() => handleDeleteJob(job.id)}
+                        className="p-3 text-red-500 hover:bg-red-50 rounded-2xl transition-colors"
+                        title="Remover anúncio"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+
+                      <button onClick={() => handleWhatsAppClick(job)} className="bg-[#22C55E] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition-transform">
+                        <MessageCircle className="w-5 h-5" /> Chamar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
